@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const pool = require('./db');
+const pool = require('./db.js');
 const { fetchWeatherData } = require('./routes/weather.js');
 //const { registerUser, loginUser } = require('./routes/auth');
 
