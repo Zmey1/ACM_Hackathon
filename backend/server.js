@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" }));
 
 app.get("/", (req, res) => {
     res.send("Server is running...");
@@ -23,15 +23,21 @@ pool.connect()
 //app.post("/api/auth/login", loginUser);
 
 app.post("/store-weather", async (req, res) => {
-    const { userId, lat, lon } = req.body;
+    console.log("Received request with body:", req.body);
+    const { lat, lon } = req.body;
   
-    if (!userId || !lat || !lon) {
+    if (!lat || !lon) {
       return res.status(400).json({ error: "Missing userId, lat, or lon" });
     }
   
     try {
-      await fetchWeatherData(lat, lon, userId);
-      res.json({ message: "Weather data stored successfully!" });
+      const weatherData = await fetchWeatherData(lat, lon);
+      res.json({ 
+        message: "Weather data stored successfully!",
+        minTemp: weatherData.minTemp,
+        maxTemp: weatherData.maxTemp,
+        mainWeather: weatherData.mainWeather
+      });
     } catch (error) {
       console.error("Error in /store-weather:", error);
       res.status(500).json({ error: "Failed to fetch/store weather data" });
@@ -47,5 +53,7 @@ app.post("/store-weather", async (req, res) => {
 //app.use('/api/weather', weatherRoutes);
 //app.use('/api/ml', mlRoutes);
 
-const PORT = process.env.PORT || 6000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
