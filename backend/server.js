@@ -4,12 +4,14 @@ const dotenv = require('dotenv');
 const pool = require('./db.js');
 const { fetchWeatherData } = require('./routes/weather.js');
 //const { registerUser, loginUser } = require('./routes/auth');
+const authRoutes = require('./routes/auth.js'); // Import auth routes
+const authMiddleware = require('./middleware/authMiddleware'); // Import middleware
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" }));
 
 app.get("/", (req, res) => {
     res.send("Server is running...");
@@ -19,24 +21,61 @@ pool.connect()
     .then(() => console.log("Database connected successfully!"))
     .catch((err) => console.error("Database connection error:", err.message));
 
+// Use authentication routes
+app.use('/api/auth', authRoutes);
+
 //app.post("/api/auth/register", registerUser);
 //app.post("/api/auth/login", loginUser);
 
 app.post("/store-weather", async (req, res) => {
-    const { userId, lat, lon } = req.body;
+    //console.log("Received request with body:", req.body);
+    const { lat, lon } = req.body;
   
-    if (!userId || !lat || !lon) {
-      return res.status(400).json({ error: "Missing userId, lat, or lon" });
+    if (!lat || !lon) {
+      return res.status(400).json({ error: "Missing lat, or lon" });
     }
   
     try {
-      await fetchWeatherData(lat, lon, userId);
-      res.json({ message: "Weather data stored successfully!" });
+      const weatherData = await fetchWeatherData(lat, lon);
+      res.json({ 
+        message: "Weather data stored successfully!"
+      });
+
+      console.log("Received request with body:", req.body);
+
     } catch (error) {
       console.error("Error in /store-weather:", error);
       res.status(500).json({ error: "Failed to fetch/store weather data" });
     }
   });
+
+app.get("/get-weather", async (req, res) => {
+    try {
+        const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+
+        const query = "SELECT min_temp, max_temp, main_weather FROM today_data WHERE date = $1";
+        const { rows } = await pool.query(query, [today]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "No weather data available for today" });
+        }
+
+        const { min_temp, max_temp, main_weather } = rows[0];
+
+        // Send the response as individual variables
+        res.json({
+            minTemp: min_temp.toString(),
+            maxTemp: max_temp.toString(),
+            mainWeather: main_weather.toString()
+        });
+
+    } catch (error) {
+        console.error("Error fetching stored weather data:", error);
+        res.status(500).json({ error: "Failed to fetch stored weather data" });
+    }
+});
+
+
 
 // Import Routes
 //const authRoutes = require('./routes/auth.js');
@@ -47,5 +86,7 @@ app.post("/store-weather", async (req, res) => {
 //app.use('/api/weather', weatherRoutes);
 //app.use('/api/ml', mlRoutes);
 
-const PORT = process.env.PORT || 6000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
