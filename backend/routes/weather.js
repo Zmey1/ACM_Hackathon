@@ -18,7 +18,7 @@ async function fetchWeatherData(lat, lon) {
 
         let dailyData = {};
 
-        const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0]; 
         let minTemp = Infinity;
         let maxTemp = -Infinity;
         let mainWeather = "";
@@ -50,7 +50,7 @@ async function fetchWeatherData(lat, lon) {
                 maxTemp = Math.max(maxTemp, entry.main.temp_max);
 
                 if (!mainWeather) {
-                    mainWeather = entry.weather[0].main; // Take the first weather condition
+                    mainWeather = entry.weather[0].main; 
                 }
             }
         });
@@ -68,7 +68,7 @@ async function fetchWeatherData(lat, lon) {
         const next5DaysData = Object.entries(dailyData).slice(0, 5);
         for (const [entryDate, data] of next5DaysData) {
             const { temperature, humidity, wind_speed, rainfall } = data;
-            await storeWeatherData(entryDate, temperature, humidity, wind_speed, rainfall);
+            await storeWeatherData(lat, lon, entryDate, temperature, humidity, wind_speed, rainfall);
         }
 
         console.log("Weather data stored successfully!");
@@ -84,17 +84,17 @@ async function fetchWeatherData(lat, lon) {
     }
 }
 
-async function storeWeatherData(date, temperature, humidity, wind_speed, rainfall) {
+async function storeWeatherData(lat, lon, date, temperature, humidity, wind_speed, rainfall) {
     const query = `
-        INSERT INTO weather_data (date, temperature, humidity, wind_speed, rainfall)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO weather_data (latitude, longitude, date, temperature, humidity, wind_speed, rainfall)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (date) DO UPDATE 
         SET temperature = EXCLUDED.temperature,
             humidity = EXCLUDED.humidity,
             wind_speed = EXCLUDED.wind_speed,
             rainfall = EXCLUDED.rainfall;
     `;
-    const values = [date, temperature, humidity, wind_speed, rainfall];
+    const values = [lat, lon, date, temperature, humidity, wind_speed, rainfall];
 
     try {
         console.log("Inserting data into DB:", values);

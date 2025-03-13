@@ -21,11 +21,7 @@ pool.connect()
     .then(() => console.log("Database connected successfully!"))
     .catch((err) => console.error("Database connection error:", err.message));
 
-// Use authentication routes
 app.use('/api/auth', authRoutes);
-
-//app.post("/api/auth/register", registerUser);
-//app.post("/api/auth/login", loginUser);
 
 app.post("/store-weather", async (req, res) => {
     //console.log("Received request with body:", req.body);
@@ -51,7 +47,7 @@ app.post("/store-weather", async (req, res) => {
 
 app.get("/get-weather", async (req, res) => {
     try {
-        const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0]; 
 
         const query = "SELECT min_temp, max_temp, main_weather FROM today_data WHERE date = $1";
         const { rows } = await pool.query(query, [today]);
@@ -62,7 +58,6 @@ app.get("/get-weather", async (req, res) => {
 
         const { min_temp, max_temp, main_weather } = rows[0];
 
-        // Send the response as individual variables
         res.json({
             minTemp: min_temp.toString(),
             maxTemp: max_temp.toString(),
@@ -74,8 +69,6 @@ app.get("/get-weather", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch stored weather data" });
     }
 });
-
-
 
 // Import Routes
 //const authRoutes = require('./routes/auth.js');
