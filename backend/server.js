@@ -3,10 +3,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const pool = require('./db.js');
 const { fetchWeatherData } = require('./routes/weather.js');
-//const { registerUser, loginUser } = require('./routes/auth');
-const authRoutes = require('./routes/auth.js'); // Import auth routes
+const authRoutes = require('./routes/auth.js'); 
 const cropRoutes = require('./routes/predict.js'); 
-const authMiddleware = require('./middleware/authMiddleware'); // Import middleware
+const authMiddleware = require('./middleware/authMiddleware'); 
 
 dotenv.config();
 
@@ -71,15 +70,6 @@ app.get("/get-weather", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch stored weather data" });
     }
 });
-
-// Import Routes
-//const authRoutes = require('./routes/auth.js');
-//const weatherRoutes = require('./routes/weather');
-//const mlRoutes = require('./routes/ml');
-
-//app.use('/api/auth', authRoutes);
-//app.use('/api/weather', weatherRoutes);
-//app.use('/api/ml', mlRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {

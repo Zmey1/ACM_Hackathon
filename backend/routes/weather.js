@@ -55,7 +55,6 @@ async function fetchWeatherData(lat, lon) {
                 dailyData[entryDate].rainfall += entry.rain["3h"];
             }
 
-            // Updating today's weather
             if (entryDate === today) {
                 if (minTempToday === null || entry.main.temp_min < minTempToday) {
                     minTempToday = entry.main.temp_min;
