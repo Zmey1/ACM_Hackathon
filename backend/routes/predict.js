@@ -85,7 +85,6 @@ router.get("/latest-prediction", async (req, res) => {
         }
 
         res.status(200).json(result.rows[0]);
-        console.log(result.rows[0]);
 
     } catch (error) {
         console.error("Error fetching latest prediction:", error);
@@ -96,32 +95,73 @@ router.get("/latest-prediction", async (req, res) => {
 
 router.post("/store-prediction", async (req, res) => {
     try {
-        const { water_predicted, next_water_date, water_frequency } = req.body;
+        const { 
+            water_predicted, 
+            water_predicted_acre, 
+            next_water_date, 
+            water_frequency, 
+            water_guidance, 
+            simple_instruction 
+        } = req.body;
+
         console.log(req.body);
 
-        if (!id || water_predicted === undefined || !next_water_date || !water_frequency) {
-            return res.status(400).json({ error: "All parameters (id, water_predicted, next_water_date, water_frequency) are required" });
+        // Validate required fields
+        if (
+            water_predicted === undefined || 
+            water_predicted_acre === undefined || 
+            !next_water_date || 
+            !water_frequency || 
+            !water_guidance || 
+            !simple_instruction
+        ) {
+            return res.status(400).json({ 
+                error: "All parameters (water_predicted, water_predicted_acre, next_water_date, water_frequency, water_guidance, simple_instruction) are required" 
+            });
         }
 
+        // Fetch the latest id from the predictwater table
+        const idQuery = `SELECT id FROM predictwater ORDER BY id DESC LIMIT 1;`;
+        const idResult = await pool.query(idQuery);
+
+        if (idResult.rows.length === 0) {
+            return res.status(404).json({ error: "No records found in predictwater table" });
+        }
+
+        const latestId = idResult.rows[0].id;
+
+        // Update the latest record with the new values
         const updateQuery = `
             UPDATE predictwater 
-            SET water_predicted = $1, next_water_date = $2, water_frequency = $3
-            WHERE id = $4
+            SET 
+                water_predicted = $1, 
+                water_predicted_acre = $2, 
+                next_water_date = $3, 
+                water_frequency = $4, 
+                water_guidance = $5, 
+                simple_instruction = $6
+            WHERE id = $7
             RETURNING *;
         `;
-        const updateResult = await pool.query(updateQuery, [water_predicted, next_water_date, water_frequency, id]);
 
-        if (updateResult.rows.length === 0) {
-            return res.status(404).json({ error: "No matching record found to update" });
-        }
+        const updateResult = await pool.query(updateQuery, [
+            water_predicted, 
+            water_predicted_acre, 
+            next_water_date, 
+            water_frequency, 
+            water_guidance, 
+            simple_instruction, 
+            latestId
+        ]);
 
         res.status(200).json({ message: "Prediction stored successfully", data: updateResult.rows[0] });
-        console.log(updateResult.rows[0]);
 
     } catch (error) {
         console.error("Error storing prediction:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+
 
 module.exports = router;
