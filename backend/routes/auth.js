@@ -20,6 +20,7 @@ router.post('/register', async (req, res) => {
                          [name, email, hashedPassword]);
         res.status(201).json({ message: "User registered successfully!" });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: "Error registering user" });
     }
 });
@@ -35,9 +36,13 @@ router.post('/login', async (req, res) => {
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
         const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+        res.json({ token });
+
     } catch (error) {
         res.status(500).json({ error: "Server error" });
     }
 });
+
 
 module.exports = router;
