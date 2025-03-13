@@ -5,6 +5,7 @@ const pool = require('./db.js');
 const { fetchWeatherData } = require('./routes/weather.js');
 //const { registerUser, loginUser } = require('./routes/auth');
 const authRoutes = require('./routes/auth.js'); // Import auth routes
+const cropRoutes = require('./routes/predict.js'); 
 const authMiddleware = require('./middleware/authMiddleware'); // Import middleware
 
 dotenv.config();
@@ -22,6 +23,7 @@ pool.connect()
     .catch((err) => console.error("Database connection error:", err.message));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/crop', cropRoutes); 
 
 app.post("/store-weather", async (req, res) => {
     //console.log("Received request with body:", req.body);
