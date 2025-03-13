@@ -1,7 +1,8 @@
-import 'package:agricare/pages/locationpage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:agricare/pages/locationpage.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -12,6 +13,14 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   bool isLogin = true;
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  String errorMessage = ""; // To store validation errors
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -20,96 +29,100 @@ class _SignInPageState extends State<SignInPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            ClipPath(
-              clipper: UpwardCurveClipper(),
-              child: Image(
-                image: AssetImage('images/farmer_img.png'),
-                height: screenHeight * 0.4,
-                width: double.infinity,
-                fit: BoxFit.cover,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              ClipPath(
+                clipper: UpwardCurveClipper(),
+                child: Image(
+                  image: AssetImage('images/farmer_img.png'),
+                  height: screenHeight * 0.4,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            SizedBox(height: screenHeight * 0.05),
-            Container(
-              padding: EdgeInsets.all(screenWidth * 0.05),
-              margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              isLogin = false;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                !isLogin ? Color(0xFF75B94A) : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+              SizedBox(height: screenHeight * 0.05),
+              Container(
+                padding: EdgeInsets.all(screenWidth * 0.05),
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                isLogin = false;
+                                errorMessage = "";
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  !isLogin ? Color(0xFF75B94A) : Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            "SIGN UP",
-                            style: TextStyle(
-                              color: !isLogin ? Colors.white : Colors.black,
-                              fontFamily: 'Alata',
+                            child: Text(
+                              "SIGN UP",
+                              style: TextStyle(
+                                color: !isLogin ? Colors.white : Colors.black,
+                                fontFamily: 'Alata',
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: screenWidth * 0.02),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              isLogin = true;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isLogin ? Color(0xFF75B94A) : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        SizedBox(width: screenWidth * 0.02),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                isLogin = true;
+                                errorMessage = "";
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  isLogin ? Color(0xFF75B94A) : Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            "LOGIN",
-                            style: TextStyle(
-                              color: isLogin ? Colors.white : Colors.black,
-                              fontFamily: 'Alata',
+                            child: Text(
+                              "LOGIN",
+                              style: TextStyle(
+                                color: isLogin ? Colors.white : Colors.black,
+                                fontFamily: 'Alata',
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  if (!isLogin)
-                    signUpForm(screenWidth)
-                  else
-                    loginForm(screenWidth),
-                ],
+                      ],
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    if (!isLogin)
+                      signUpForm(screenWidth)
+                    else
+                      loginForm(screenWidth),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -118,9 +131,10 @@ class _SignInPageState extends State<SignInPage> {
   Widget loginForm(double screenWidth) {
     return Column(
       children: [
-        textField("EMAIL", screenWidth),
+        textField("EMAIL", screenWidth, controller: emailController),
         SizedBox(height: screenWidth * 0.08),
-        textField("PASSWORD", screenWidth, obscureText: true),
+        textField("PASSWORD", screenWidth,
+            controller: passwordController, obscureText: true),
         SizedBox(height: screenWidth * 0.05),
         logInButton("LOGIN"),
       ],
@@ -130,11 +144,19 @@ class _SignInPageState extends State<SignInPage> {
   Widget signUpForm(double screenWidth) {
     return Column(
       children: [
-        textField("EMAIL", screenWidth),
+        textField("EMAIL", screenWidth, controller: emailController),
         SizedBox(height: screenWidth * 0.08),
-        textField("PASSWORD", screenWidth, obscureText: true),
+        textField("PASSWORD", screenWidth,
+            controller: passwordController, obscureText: true),
         SizedBox(height: screenWidth * 0.08),
-        textField("CONFIRM PASSWORD", screenWidth, obscureText: true),
+        textField("CONFIRM PASSWORD", screenWidth,
+            controller: confirmPasswordController, obscureText: true),
+        SizedBox(height: screenWidth * 0.02),
+        if (errorMessage.isNotEmpty)
+          Text(
+            errorMessage,
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
         SizedBox(height: screenWidth * 0.05),
         signUpButton("SIGN UP"),
       ],
@@ -142,7 +164,7 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   Widget textField(String hint, double screenWidth,
-      {bool obscureText = false}) {
+      {bool obscureText = false, TextEditingController? controller}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -156,6 +178,7 @@ class _SignInPageState extends State<SignInPage> {
         ],
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hint,
@@ -176,80 +199,97 @@ class _SignInPageState extends State<SignInPage> {
 
   Widget signUpButton(String text) {
     return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const LocationPage(),
-          ),
-        );
+      onPressed: () async {
+        if (passwordController.text != confirmPasswordController.text) {
+          setState(() {
+            errorMessage = "Passwords do not match!";
+          });
+          return;
+        }
+
+        try {
+          final response = await http.post(
+            Uri.parse(
+                "https://ba7f-103-238-230-194.ngrok-free.app/api/auth/register"),
+            body: jsonEncode({
+              "email": emailController.text,
+              "password": passwordController.text,
+              "confirmPassword": confirmPasswordController.text,
+            }),
+            headers: {"Content-Type": "application/json"},
+          );
+
+          print("Response Status: ${response.statusCode}");
+          print("Response Body: ${response.body}");
+
+          // Check if the response body is empty
+          if (response.body.isEmpty) {
+            setState(() {
+              errorMessage = "No response from server. Please try again later.";
+            });
+            return;
+          }
+
+          final responseData = jsonDecode(response.body);
+
+          if (response.statusCode == 201 && responseData["success"] == true) {
+            await saveLoginStatus();
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const LocationPage()));
+          } else {
+            setState(() {
+              errorMessage = responseData["message"] ??
+                  "Signup failed! User may already exist.";
+            });
+          }
+        } catch (e) {
+          print("Signup Error: $e");
+          setState(() {
+            errorMessage = "An unexpected error occurred. Please try again.";
+          });
+        }
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF75B94A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        minimumSize: Size(double.infinity, 50),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Alata',
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
+      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF75B94A)),
+      child: Text(text, style: TextStyle(color: Colors.white)),
     );
   }
 
   Widget logInButton(String text) {
     return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF75B94A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        minimumSize: Size(double.infinity, 50),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Alata',
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
+      onPressed: () async {
+        final response = await http.post(
+          Uri.parse(
+              "https://ba7f-103-238-230-194.ngrok-free.app/api/auth/login"),
+          body: jsonEncode({
+            "email": emailController.text,
+            "password": passwordController.text,
+          }),
+          headers: {"Content-Type": "application/json"},
+        );
+
+        final responseData = jsonDecode(response.body);
+        print("Response Status: ${response.statusCode}");
+        print("Response Body: ${response.body}");
+
+        if (response.statusCode == 200 && responseData["success"] == true) {
+          await saveLoginStatus();
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const LocationPage()));
+        } else {
+          setState(() {
+            errorMessage =
+                responseData["message"] ?? "Invalid email or password!";
+          });
+        }
+      },
+      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF75B94A)),
+      child: Text(text, style: TextStyle(color: Colors.white)),
     );
   }
 }
 
-class UpwardCurveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-
-    path.lineTo(0, size.height);
-
-    final curveHeight = size.height * 0.3;
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height - curveHeight,
-      size.width,
-      size.height,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
+// Save login status locally
 Future<void> saveLoginStatus() async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.setBool('isLoggedIn', true); // Save login status
+  await prefs.setBool('isLoggedIn', true);
 }
