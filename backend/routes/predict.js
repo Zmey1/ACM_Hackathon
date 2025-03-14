@@ -100,7 +100,6 @@ router.post("/store-prediction", async (req, res) => {
             water_predicted_acre, 
             next_water_date, 
             water_frequency, 
-            water_guidance, 
             simple_instruction 
         } = req.body;
 
@@ -112,16 +111,15 @@ router.post("/store-prediction", async (req, res) => {
             water_predicted_acre === undefined || 
             !next_water_date || 
             !water_frequency || 
-            !water_guidance || 
             !simple_instruction
         ) {
             return res.status(400).json({ 
-                error: "All parameters (water_predicted, water_predicted_acre, next_water_date, water_frequency, water_guidance, simple_instruction) are required" 
+                error: "All parameters (water_predicted, water_predicted_acre, next_water_date, water_frequency, simple_instruction) are required" 
             });
         }
 
         // Fetch the latest id from the predictwater table
-        const idQuery = `SELECT id FROM predictwater ORDER BY id DESC LIMIT 1;`;
+        const idQuery = `SELECT id, crop_type FROM predictwater ORDER BY id DESC LIMIT 1;`;
         const idResult = await pool.query(idQuery);
 
         if (idResult.rows.length === 0) {
@@ -129,6 +127,7 @@ router.post("/store-prediction", async (req, res) => {
         }
 
         const latestId = idResult.rows[0].id;
+        const cropType = idResult.rows[0].crop_type; // Extract crop_type
 
         // Update the latest record with the new values
         const updateQuery = `
@@ -138,9 +137,8 @@ router.post("/store-prediction", async (req, res) => {
                 water_predicted_acre = $2, 
                 next_water_date = $3, 
                 water_frequency = $4, 
-                water_guidance = $5, 
-                simple_instruction = $6
-            WHERE id = $7
+                simple_instruction = $5
+            WHERE id = $6
             RETURNING *;
         `;
 
@@ -148,14 +146,23 @@ router.post("/store-prediction", async (req, res) => {
             water_predicted, 
             water_predicted_acre, 
             next_water_date, 
-            water_frequency, 
-            water_guidance, 
+            water_frequency,  
             simple_instruction, 
             latestId
         ]);
 
-        res.status(200).json({ message: "Prediction stored successfully", data: updateResult.rows[0] });
-
+        res.status(200).json({ 
+            message: "Prediction stored successfully", 
+            data: {
+                // Convert all values to strings
+                //water_predicted: updatedData.water_predicted.toString(),
+                water_predicted_acre: updatedData.water_predicted_acre.toString(),
+                next_water_date: updatedData.next_water_date.toISOString(), // Convert Date to string in ISO format
+                water_frequency: updatedData.water_frequency.toString(),
+                simple_instruction: updatedData.simple_instruction.toString(),
+                crop_type: cropType.toString() // Convert crop_type to string
+            }
+        });
     } catch (error) {
         console.error("Error storing prediction:", error);
         res.status(500).json({ error: "Internal Server Error" });

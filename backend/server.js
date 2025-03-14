@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const pool = require('./db.js');
 const { fetchWeatherData } = require('./routes/weather.js');
+const { sendWeatherNotification } = require('./routes/notification.js'); 
 const authRoutes = require('./routes/auth.js'); 
 const cropRoutes = require('./routes/predict.js'); 
 const authMiddleware = require('./middleware/authMiddleware'); 
@@ -22,34 +23,41 @@ pool.connect()
     .catch((err) => console.error("Database connection error:", err.message));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/crop', cropRoutes); 
+app.use('/api/crop', cropRoutes);
 
 app.post("/store-weather", async (req, res) => {
-    //console.log("Received request with body:", req.body);
     const { lat, lon } = req.body;
   
     if (!lat || !lon) {
-      return res.status(400).json({ error: "Missing lat, or lon" });
+        return res.status(400).json({ error: "Missing lat, or lon" });
     }
   
     try {
-      const weatherData = await fetchWeatherData(lat, lon);
-      res.json({ 
-        message: "Weather data stored successfully!"
-      });
+        const { message } = await fetchWeatherData(lat, lon);
 
-      console.log("Received request with body:", req.body);
+        if (message) {
+            const result = await pool.query("SELECT onesignal_player_id FROM userNotifications WHERE onesignal_player_id IS NOT NULL");
+            const playerIds = result.rows.map(row => row.onesignal_player_id);
 
+            if (playerIds.length > 0) {
+                await sendWeatherNotification(playerIds, message);
+                console.log("✅ Weather notification sent to users.");
+            } else {
+                console.log("⚠️ No users available for notifications.");
+            }
+        }
+
+        res.json({ message: "Weather data stored successfully!" });
+        console.log("Received request with body:", req.body);
     } catch (error) {
-      console.error("Error in /store-weather:", error);
-      res.status(500).json({ error: "Failed to fetch/store weather data" });
+        console.error("Error in /store-weather:", error);
+        res.status(500).json({ error: "Failed to fetch/store weather data" });
     }
-  });
+});
 
 app.get("/get-weather", async (req, res) => {
     try {
         const today = new Date().toISOString().split("T")[0]; 
-
         const query = "SELECT min_temp, max_temp, main_weather FROM today_data WHERE date = $1";
         const { rows } = await pool.query(query, [today]);
 
@@ -64,7 +72,6 @@ app.get("/get-weather", async (req, res) => {
             maxTemp: max_temp.toString(),
             mainWeather: main_weather.toString()
         });
-
     } catch (error) {
         console.error("Error fetching stored weather data:", error);
         res.status(500).json({ error: "Failed to fetch stored weather data" });
