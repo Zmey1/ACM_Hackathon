@@ -7,11 +7,10 @@ const path = require('path');
 
 const router = express.Router();
 
-// Helper function to run Python script and get its output
+// Helper function 
 const runPythonScript = () => {
   return new Promise((resolve, reject) => {
-    // Adjust the path to match your actual directory structure
-    const pythonScript = path.join(__dirname, '../../formula_based_water_req.py');
+    const pythonScript = path.join(__dirname, 'scripts/formula_based_water_req.py');
     const pythonProcess = spawn('python', [pythonScript]);
     
     let scriptOutput = '';
@@ -91,41 +90,60 @@ router.post("/get-crop", async (req, res) => {
         crop_type, soil_type, plantation_date
     ]);
     
-    // After inserting the data, run the Python script
     try {
         console.log("Running water requirement calculation script...");
         await runPythonScript();
-        
-        // Get the latest water calculation
+    
         const waterCalcQuery = `
             SELECT water_predicted, water_predicted_acre, next_water_date, water_frequency, simple_instruction
             FROM predictwater
             WHERE id = (SELECT MAX(id) FROM predictwater);
         `;
-        
+    
         const waterCalcResult = await pool.query(waterCalcQuery);
-        
+    
         if (waterCalcResult.rows.length > 0) {
-            // Combine original data with water calculation
-            const responseData = {
-                ...insertResult.rows[0],
-                water_data: waterCalcResult.rows[0]
-            };
-            
-            res.status(200).json(responseData);
+            const { water_predicted, water_predicted_acre, next_water_date, water_frequency, simple_instruction } = waterCalcResult.rows[0];
+    
+            const updateQuery = `
+                UPDATE predictwater 
+                SET 
+                    water_predicted = $1, 
+                    water_predicted_acre = $2, 
+                    next_water_date = $3, 
+                    water_frequency = $4, 
+                    simple_instruction = $5
+                WHERE id = (SELECT MAX(id) FROM predictwater)
+                RETURNING *;
+            `;
+    
+            const updatedResult = await pool.query(updateQuery, [
+                water_predicted, 
+                water_predicted_acre, 
+                next_water_date, 
+                water_frequency,  
+                simple_instruction
+            ]);
+    
+            res.status(200).json({
+                crop_type: insertResult.rows[0].crop_type,  
+                water_predicted_acre: String(water_predicted_acre),
+                next_water_date: next_water_date.toISOString().split('T')[0],
+                water_frequency: String(water_frequency),
+                simple_instruction: String(simple_instruction)
+            });
+
         } else {
-            // Return original data if water calculation not found
             res.status(200).json(insertResult.rows[0]);
         }
     } catch (scriptError) {
         console.error("Error running Python script:", scriptError);
-        // Still return the basic data even if Python script fails
         res.status(200).json({
             ...insertResult.rows[0],
             water_calculation_error: "Failed to calculate water requirements"
         });
     }
-
+    
     } catch (error) {
         console.error("Error fetching weather data:", error);
         res.status(500).json({ error: "Internal Server Error" });
@@ -159,7 +177,6 @@ router.get("/latest-prediction", async (req, res) => {
     }
 });
 
-
 router.post("/store-prediction", async (req, res) => {
     try {
         const { 
@@ -172,7 +189,6 @@ router.post("/store-prediction", async (req, res) => {
 
         console.log(req.body);
 
-        // Validate required fields
         if (
             water_predicted === undefined || 
             water_predicted_acre === undefined || 
@@ -185,7 +201,6 @@ router.post("/store-prediction", async (req, res) => {
             });
         }
 
-        // Fetch the latest id from the predictwater table
         const idQuery = `SELECT id, crop_type FROM predictwater ORDER BY id DESC LIMIT 1;`;
         const idResult = await pool.query(idQuery);
 
@@ -196,7 +211,6 @@ router.post("/store-prediction", async (req, res) => {
         const latestId = idResult.rows[0].id;
         const cropType = idResult.rows[0].crop_type; // Extract crop_type
 
-        // Update the latest record with the new values
         const updateQuery = `
             UPDATE predictwater 
             SET 
@@ -218,19 +232,18 @@ router.post("/store-prediction", async (req, res) => {
             latestId
         ]);
         
-        // Fix: Use updateResult.rows[0] instead of undefined variable
+        
         const updatedData = updateResult.rows[0];
 
         res.status(200).json({ 
             message: "Prediction stored successfully", 
             data: {
-                // Convert all values to strings
-                water_predicted: updatedData.water_predicted.toString(),
+               
                 water_predicted_acre: updatedData.water_predicted_acre.toString(),
-                next_water_date: updatedData.next_water_date.toISOString(), // Convert Date to string in ISO format
+                next_water_date: updatedData.next_water_date.toISOString(),
                 water_frequency: updatedData.water_frequency.toString(),
                 simple_instruction: updatedData.simple_instruction.toString(),
-                crop_type: cropType.toString() // Convert crop_type to string
+                crop_type: cropType.toString()
             }
         });
     } catch (error) {
@@ -238,5 +251,38 @@ router.post("/store-prediction", async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+router.get("/get-water-prediction", async (req, res) => {
+    try {
+        const query = `
+            SELECT water_predicted_acre, next_water_date, 
+                   water_frequency, simple_instruction, crop_type
+            FROM predictwater
+            ORDER BY id DESC 
+            LIMIT 1;
+        `;
+        
+        const result = await pool.query(query);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "No prediction data found" });
+        }
+
+        const { water_predicted_acre, next_water_date, water_frequency, simple_instruction, crop_type } = result.rows[0];
+
+        res.status(200).json({
+            water_predicted_acre: water_predicted_acre.toString(),
+            next_water_date: next_water_date.toISOString().split('T')[0],
+            water_frequency: water_frequency.toString(),
+            simple_instruction: simple_instruction.toString(),
+            crop_type: crop_type.toString()
+        });
+
+    } catch (error) {
+        console.error("Error fetching water prediction data:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 
 module.exports = router;

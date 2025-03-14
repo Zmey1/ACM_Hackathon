@@ -66,7 +66,6 @@ async function getPlayerIds() {
     }
 }
 
-// Send notifications
 async function sendNotifications() {
     const playerIds = await getPlayerIds();
     if (playerIds.length > 0) {
@@ -76,7 +75,6 @@ async function sendNotifications() {
 
 sendNotifications();
 
-// Start server
 app.listen(3000, () => {
     console.log("Server running on port 3000");
 });

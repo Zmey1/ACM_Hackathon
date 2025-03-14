@@ -303,14 +303,14 @@ def calculate_crop_water(crop_name, soil_type, planting_date, weather_data=None,
     
     # Load data from CSV files
     try:
-        soil_properties = load_soil_properties('soil_properties.csv')
+        soil_properties = load_soil_properties('C:/Users/Tejas/Desktop/Projects/ACM_Hackathon/backend/routes/scripts/soil_properties.csv')
         print(f"Loaded soil properties for: {list(soil_properties.keys())}")
     except Exception as e:
         print(f"Error loading soil properties: {e}")
         return None
         
     try:
-        crop_properties = load_crop_properties('crop_properties.csv')
+        crop_properties = load_crop_properties('C:/Users/Tejas/Desktop/Projects/ACM_Hackathon/backend/routes/scripts/crop_properties.csv')
         print(f"Loaded crop properties for: {list(crop_properties.keys())}")
     except Exception as e:
         print(f"Error loading crop properties: {e}")
