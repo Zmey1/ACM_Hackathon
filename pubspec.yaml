@@ -78,6 +78,8 @@ flutter:
     - images/sunny.png
     - images/thunderstorm.png
     - images/ai_chatbot.png
+    - images/bg.png
+    - images/crop.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

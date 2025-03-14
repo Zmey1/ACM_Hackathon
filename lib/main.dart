@@ -1,9 +1,8 @@
-import 'package:agricare/pages/dashboardpage.dart';
-import 'package:agricare/pages/locationpage.dart';
+import 'package:agricare/pages/chat_app.dart';
 import 'package:agricare/pages/mainpage.dart';
-import 'package:agricare/pages/signinpage.dart';
+import 'package:agricare/pages/resultpage.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // The location page for logged-in users
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,11 +20,12 @@ class MyApp extends StatelessWidget {
   final bool isLoggedIn;
 
   const MyApp({Key? key, required this.isLoggedIn}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Dashboardpage(),
+      home: Mainpage(),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:agricare/pages/chat_app.dart';
 import 'package:agricare/pages/resultpage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -38,16 +39,17 @@ class _DashboardpageState extends State<Dashboardpage> {
     if (selectedSoil.isNotEmpty &&
         selectedCrop.isNotEmpty &&
         selectedDate != null) {
-      final url = Uri.parse("https://your-backend-url.com/submit-selection");
+      final url = Uri.parse(
+          "https://ba7f-103-238-230-194.ngrok-free.app/api/crop/get-crop");
 
       try {
         final response = await http.post(
           url,
           headers: {"Content-Type": "application/json"},
           body: json.encode({
-            "soil": selectedSoil,
-            "crop": selectedCrop,
-            "date": selectedDate!.toIso8601String(),
+            "soil_type": selectedSoil,
+            "crop_type": selectedCrop,
+            "plantation_date": selectedDate!.toIso8601String(),
           }),
         );
 
@@ -225,15 +227,23 @@ class _DashboardpageState extends State<Dashboardpage> {
                 onPressed: sendSelectionToBackend,
                 child: Text("Next"),
               ),
-              Transform.translate(
-                offset: Offset(screenWidth * 0.3, screenHeight * 0.35),
-                child: Align(
-                  alignment: Alignment.bottomRight,
-                  child: Center(
-                    child: Image.asset(
-                      'images/ai_chatbot.png',
-                      height: screenHeight * 0.4,
-                      width: double.infinity,
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatScreen()),
+                  );
+                },
+                child: Transform.translate(
+                  offset: Offset(screenWidth * 0.34, screenHeight * 0.11),
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: Center(
+                      child: Image.asset(
+                        'images/ai_chatbot.png',
+                        height: screenHeight * 0.4,
+                        width: double.infinity,
+                      ),
                     ),
                   ),
                 ),
