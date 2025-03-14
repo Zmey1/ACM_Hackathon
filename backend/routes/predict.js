@@ -2,8 +2,41 @@ require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
 const pool = require("../db"); 
+const { spawn } = require('child_process');
+const path = require('path');
 
 const router = express.Router();
+
+// Helper function to run Python script and get its output
+const runPythonScript = () => {
+  return new Promise((resolve, reject) => {
+    // Adjust the path to match your actual directory structure
+    const pythonScript = path.join(__dirname, '../../formula_based_water_req.py');
+    const pythonProcess = spawn('python', [pythonScript]);
+    
+    let scriptOutput = '';
+    let scriptError = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+      scriptOutput += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      scriptError += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`Python script exited with code ${code}`);
+        console.error(`Error: ${scriptError}`);
+        reject(new Error(`Python script failed: ${scriptError}`));
+      } else {
+        console.log("Python script executed successfully");
+        resolve(scriptOutput);
+      }
+    });
+  });
+};
 
 router.post("/get-crop", async (req, res) => {
     const { crop_type, soil_type, plantation_date } = req.body;
@@ -57,9 +90,41 @@ router.post("/get-crop", async (req, res) => {
         lat, lon, max_temp, min_temp, avg_wind_speed, avg_relative_humidity, total_rainfall, elevation,  
         crop_type, soil_type, plantation_date
     ]);
-
-    res.status(200).json(insertResult.rows[0]);
-    console.log(insertResult.rows[0]);
+    
+    // After inserting the data, run the Python script
+    try {
+        console.log("Running water requirement calculation script...");
+        await runPythonScript();
+        
+        // Get the latest water calculation
+        const waterCalcQuery = `
+            SELECT water_predicted, water_predicted_acre, next_water_date, water_frequency, simple_instruction
+            FROM predictwater
+            WHERE id = (SELECT MAX(id) FROM predictwater);
+        `;
+        
+        const waterCalcResult = await pool.query(waterCalcQuery);
+        
+        if (waterCalcResult.rows.length > 0) {
+            // Combine original data with water calculation
+            const responseData = {
+                ...insertResult.rows[0],
+                water_data: waterCalcResult.rows[0]
+            };
+            
+            res.status(200).json(responseData);
+        } else {
+            // Return original data if water calculation not found
+            res.status(200).json(insertResult.rows[0]);
+        }
+    } catch (scriptError) {
+        console.error("Error running Python script:", scriptError);
+        // Still return the basic data even if Python script fails
+        res.status(200).json({
+            ...insertResult.rows[0],
+            water_calculation_error: "Failed to calculate water requirements"
+        });
+    }
 
     } catch (error) {
         console.error("Error fetching weather data:", error);
@@ -73,7 +138,9 @@ router.get("/latest-prediction", async (req, res) => {
             SELECT latitude, longitude, max_temp, min_temp, 
                    avg_wind_speed, avg_relative_humidity, 
                    total_rainfall, elevation,  
-                   crop_type, soil_type, plantation_date
+                   crop_type, soil_type, plantation_date,
+                   water_predicted, water_predicted_acre, next_water_date, 
+                   water_frequency, simple_instruction
             FROM predictwater
             ORDER BY id DESC 
             LIMIT 1;
@@ -150,12 +217,15 @@ router.post("/store-prediction", async (req, res) => {
             simple_instruction, 
             latestId
         ]);
+        
+        // Fix: Use updateResult.rows[0] instead of undefined variable
+        const updatedData = updateResult.rows[0];
 
         res.status(200).json({ 
             message: "Prediction stored successfully", 
             data: {
                 // Convert all values to strings
-                //water_predicted: updatedData.water_predicted.toString(),
+                water_predicted: updatedData.water_predicted.toString(),
                 water_predicted_acre: updatedData.water_predicted_acre.toString(),
                 next_water_date: updatedData.next_water_date.toISOString(), // Convert Date to string in ISO format
                 water_frequency: updatedData.water_frequency.toString(),
@@ -168,7 +238,5 @@ router.post("/store-prediction", async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
-
 
 module.exports = router;
