@@ -1,0 +1,12 @@
+parameter,value
+latitude,9.2088
+longitude,77.2561
+elevation,150
+reference_et,5.2
+annual_rainfall,850
+monsoon_months,"9,10,11,12"
+dry_months,"1,2,3,4,5"
+annual_min_temp,22
+annual_max_temp,36
+hottest_months,"4,5"
+coolest_months,"11,12"
