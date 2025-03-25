@@ -210,7 +210,7 @@ class _SignInPageState extends State<SignInPage> {
         try {
           final response = await http.post(
             Uri.parse(
-                "https://ba7f-103-238-230-194.ngrok-free.app/api/auth/register"),
+                "https://52e6-103-4-220-252.ngrok-free.app/api/auth/register"),
             body: jsonEncode({
               "email": emailController.text,
               "password": passwordController.text,
@@ -258,8 +258,7 @@ class _SignInPageState extends State<SignInPage> {
     return ElevatedButton(
       onPressed: () async {
         final response = await http.post(
-          Uri.parse(
-              "https://ba7f-103-238-230-194.ngrok-free.app/api/auth/login"),
+          Uri.parse("https://52e6-103-4-220-252.ngrok-free.app/api/auth/login"),
           body: jsonEncode({
             "email": emailController.text,
             "password": passwordController.text,

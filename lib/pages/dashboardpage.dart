@@ -40,7 +40,7 @@ class _DashboardpageState extends State<Dashboardpage> {
         selectedCrop.isNotEmpty &&
         selectedDate != null) {
       final url = Uri.parse(
-          "https://ba7f-103-238-230-194.ngrok-free.app/api/crop/get-crop");
+          "https://52e6-103-4-220-252.ngrok-free.app/api/crop/get-crop");
 
       try {
         final response = await http.post(
@@ -95,7 +95,7 @@ class _DashboardpageState extends State<Dashboardpage> {
   Future<void> fetchWeather() async {
     try {
       final response = await http.get(
-        Uri.parse('https://ba7f-103-238-230-194.ngrok-free.app/get-weather'),
+        Uri.parse('https://52e6-103-4-220-252.ngrok-free.app/get-weather'),
       );
 
       if (response.statusCode == 200) {

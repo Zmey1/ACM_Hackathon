@@ -71,7 +71,7 @@ class _LocationPageState extends State<LocationPage> {
 
       // Send data to backend (ONLY ONCE)
       final response = await http.post(
-        Uri.parse('https://ba7f-103-238-230-194.ngrok-free.app/store-weather'),
+        Uri.parse('https://52e6-103-4-220-252.ngrok-free.app/store-weather'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(locationPayload),
       );
