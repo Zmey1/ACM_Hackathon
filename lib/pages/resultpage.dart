@@ -27,7 +27,7 @@ class _ResultpageState extends State<Resultpage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://ba7f-103-238-230-194.ngrok-free.app/api/crop/get-water-prediction'),
+            'https://52e6-103-4-220-252.ngrok-free.app/api/crop/get-water-prediction'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

@@ -13,7 +13,7 @@ class LLMService {
   final String openRouterApiUrl =
       "https://openrouter.ai/api/v1/chat/completions";
   final String backendApiUrl =
-      "https://ba7f-103-238-230-194.ngrok-free.app/api/crop/get-crop";
+      "https://52e6-103-4-220-252.ngrok-free.app/api/crop/get-crop";
   final String modelName = "google/gemma-2-9b-it:free";
 
   // Secure storage for API key

@@ -1,8 +1,5 @@
-import 'package:agricare/pages/dashboardpage.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'llm_service.dart'; // Import the LLM service
+import 'llm_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
